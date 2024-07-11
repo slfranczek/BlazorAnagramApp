@@ -1,0 +1,74 @@
+@page "/anagram-input"
+@using System.Net.Http.Json
+
+<h3>Anagram Input</h3>
+
+<div class="input-container">
+    @for (int i = 0; i < InputCells.Count; i++)
+    {
+        int localIndex = i;
+        if(localIndex >= InputCells.Count)
+        {
+            break;
+        }
+        <input type="text" @bind="@InputCells[localIndex]" maxlength="1" />
+        @if (localIndex == InputCells.Count - 1 && InputCells.Count < MaxCells)
+        {
+            <button @onclick="AddCell">+</button>
+        }
+        @if (localIndex == InputCells.Count - 1 && InputCells.Count > MinCells)
+        {
+            <button @onclick="RemoveCell">-</button>
+        }
+    }
+</div>
+
+<button @onclick="SubmitWord">Submit</button>
+
+<ul>
+    @foreach (var anagram in Anagrams)
+    {
+        <li>@anagram</li>
+    }
+</ul>
+
+@code {
+    private const int MinCells = 3;
+    private const int MaxCells = 8;
+    private List<string> InputCells;// = new List<string> { "A", "", "B", "" };
+    private List<string> Anagrams;// = new List<string>();
+
+    protected override Task OnInitializedAsync()
+    {
+        InputCells = new List<string> { "", "", "", "" };
+        Anagrams = new List<string>();
+            
+        return base.OnInitializedAsync();
+    }
+
+    private void AddCell()
+    {
+        if (InputCells.Count < MaxCells)
+        {
+            InputCells.Add("");
+        }
+    }
+
+    private void RemoveCell()
+    {
+        if (InputCells.Count > MinCells)
+        {
+            InputCells.RemoveAt(InputCells.Count - 1);
+        }
+    }
+
+    private async Task SubmitWord()
+    {
+        var word = string.Concat(InputCells);
+        var response = await Http.PostAsJsonAsync("api/anagram", new { Word = word });
+        Anagrams = await response.Content.ReadFromJsonAsync<List<string>>();
+    }
+
+    [Inject]
+    private HttpClient Http { get; set; }
+}
